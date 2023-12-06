@@ -1,10 +1,16 @@
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import numpy as np 
+import pandas as pd
 import cv2
 import matplotlib.pyplot as plt
 import skimage
 from skimage.io import imread,imshow
-
+import os
+from torch import nn
+from torch import optim
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import torch.nn as nn
+from torchvision.models import vgg19
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import torch
@@ -90,8 +96,7 @@ class MyImageFolder(Dataset):
         return high_res, low_res
 
 
-import torch.nn as nn
-from torchvision.models import vgg19
+
 
 
 class VGGLoss(nn.Module):
@@ -213,9 +218,29 @@ class Discriminator(nn.Module):
         x = self.blocks(x)
         return self.classifier(x)
 
-from torch import nn
-from torch import optim
-from torch.utils.data import DataLoader
+def plot_examples(low_res_folder, gen):
+    files = os.listdir(low_res_folder)
+
+    gen.eval()
+    for file in files:
+        image = Image.open("test_images/" + file)
+        with torch.no_grad():
+            upscaled_img = gen(
+                test_transform(image=np.asarray(image))["image"]
+                .unsqueeze(0)
+                .to()
+            )
+    gen.train()
+
+def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
+    print("=> Saving checkpoint")
+    checkpoint = {
+        "state_dict": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+    }
+    torch.save(checkpoint, filename)
+
+
 
 loader= DataLoader(MyImageFolder(frames))
 
@@ -263,8 +288,13 @@ mse = nn.MSELoss()
 bce = nn.BCEWithLogitsLoss()
 vgg_loss = VGGLoss()
 
-from tqdm import tqdm
+SAVE_MODEL = True
+CHECKPOINT_GEN = "gen.pth.tar"
+CHECKPOINT_DISC = "disc.pth.tar"
+
 for epoch in range(NUM_EPOCHS):
      train_fn(loader, disc, gen, opt_gen, opt_disc, mse, bce, vgg_loss)
 
-
+     if SAVE_MODEL:
+        save_checkpoint(gen, opt_gen, filename=CHECKPOINT_GEN)
+        save_checkpoint(disc, opt_disc, filename=CHECKPOINT_DISC)
