@@ -240,6 +240,19 @@ def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
     }
     torch.save(checkpoint, filename)
 
+def assemble_video(processed_frames_path, output_video_name, num_frames):
+    first_frame = cv2.imread(processed_frames_path + "frame_0.jpg")  # Update with the actual filename and extension
+    height, width, layers = first_frame.shape
+
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Update with appropriate codec (codec for mp4 format in this case)
+    video = cv2.VideoWriter(output_video_name, fourcc, 30.0, (width, height))  # Update FPS as required
+
+    for i in range(num_frames):  # Update NUM_FRAMES with the total number of processed frames
+        filename = processed_frames_path + f"frame_{i}.jpg"  # Update with the actual filenames
+        frame = cv2.imread(filename)
+        video.write(frame)
+
+    video.release()
 
 
 loader= DataLoader(MyImageFolder(frames))
