@@ -311,3 +311,27 @@ for epoch in range(NUM_EPOCHS):
      if SAVE_MODEL:
         save_checkpoint(gen, opt_gen, filename=CHECKPOINT_GEN)
         save_checkpoint(disc, opt_disc, filename=CHECKPOINT_DISC)
+
+newfol=[]
+for high,low in tqdm(loader):
+     for imgs in high:
+        new= gen(imgs)
+        newfol.append(new)
+
+video_name = 'output_video.avi'
+fps = 30
+
+height, width, _ = newfol[0].shape
+
+
+fourcc = cv2.VideoWriter_fourcc(*'XVID')
+video = cv2.VideoWriter(video_name, fourcc, fps, (width, height))
+
+# Write each image to the video
+for image in newfol:    
+    video.write(image)
+
+
+video.release()
+
+print(f"Video '{video_name}' created successfully.")
